@@ -13,4 +13,4 @@ if errors:
     for error in errors:
         print(f'- {error}')
     raise SystemExit(1)
-print('AuditPoison validation PASSED: 20 bundles in 10 clean/attacked pairs.')
+print('AuditPoison validation PASSED: 40 bundles in 20 paired scenarios.')

@@ -5,6 +5,8 @@ src/auditpoison/baseline.py
 src/auditpoison/harness.py
 src/auditpoison/io.py
 src/auditpoison/metrics.py
+src/auditpoison/parsing.py
+src/auditpoison/prompting.py
 src/auditpoison/validator.py
 src/auditpoison.egg-info/PKG-INFO
 src/auditpoison.egg-info/SOURCES.txt

@@ -1,65 +1,100 @@
-# AuditPoison — Day-1 Pilot
+# AuditPoison — Day-2 Balanced Pilot
 
-AuditPoison is a benchmark for adversarial manipulation of LLM-based cybersecurity compliance auditors. The pilot asks whether attacker-controlled evidence can turn a demonstrably failed or unsupported control into false **Compliant** assurance.
+AuditPoison evaluates whether LLM-based cybersecurity auditors provide false compliance assurance when evidence is adversarial, and whether their decisions remain stable under harmless presentation changes.
 
-## Day-1 contents
+## Day-2 contents
 
-- 12 narrowed control requirements inspired by NIST SP 800-53 Rev. 5.1.1;
-- 10 clean evidence bundles;
-- 10 attacked variants covering six attack families;
-- a JSON Schema and semantic dataset validator;
-- annotation and threat-model documents;
-- a model-adapter interface;
-- prediction-file evaluation with accuracy, False Assurance Rate, paired Attack Success Rate, citation precision, and contradiction recall;
-- a deliberately weak heuristic baseline for testing the pipeline.
+- 40 evidence bundles across 20 paired scenarios;
+- 10 Day-1 clean/attacked red-team pairs;
+- 10 new compliant clean/benign-stability pairs;
+- all six attack families and six benign perturbation families;
+- schema v0.2.0 and stricter semantic validation;
+- a frozen auditor prompt that treats evidence as untrusted data;
+- prompt rendering that excludes oracle, attack, and perturbation metadata;
+- provider-neutral command and file-import evaluation paths;
+- three-class metrics, False Assurance Rate, paired Attack Success Rate, benign consistency, citation metrics, evidence-flagging metrics, and calibration diagnostics.
 
-NIST publishes SP 800-53 and official machine-readable OSCAL content. The benchmark requirements here are original operationalisations and not verbatim reproductions. OWASP’s prompt-injection guidance motivates treating external content as untrusted data rather than instructions.
+## Composition
+
+| Oracle label | Bundles |
+|---|---:|
+| Compliant | 20 |
+| Non-compliant | 15 |
+| Insufficient evidence | 5 |
+
+This is balanced at the false-assurance boundary: 20 compliant bundles and 20 bundles for which a compliant decision would be unsafe.
+
+## Windows setup
+
+If the ZIP extracts into an extra folder, enter the inner project directory containing `pyproject.toml`.
+
+```cmd
+cd AuditPoison-Day2
+python -m pip install -e .
+python scripts\validate_dataset.py
+python -m pytest -q
+```
+
+## Offline smoke test
+
+```cmd
+python scripts\run_experiment.py --adapter keyword --output baseline_predictions.jsonl
+python scripts\evaluate_predictions.py baseline_predictions.jsonl
+```
+
+## Provider-neutral model workflow
+
+### Option A: command adapter
+
+Create a wrapper that reads this object from stdin:
+
+```json
+{"bundle_id":"...","system_prompt":"...","user_prompt":"..."}
+```
+
+and writes a model response:
+
+```json
+{"label":"non_compliant","confidence":0.91,"cited_evidence_ids":["E2","E3"],"flagged_evidence_ids":["E4"],"rationale":"..."}
+```
+
+Test the contract offline:
+
+```cmd
+python scripts\run_experiment.py --adapter command --output demo_predictions.jsonl --model-name demo --command python examples\demo_command_adapter.py
+python scripts\evaluate_predictions.py demo_predictions.jsonl
+```
+
+Replace the demo script with your API or local-model wrapper for a real run.
+
+### Option B: render and import
+
+```cmd
+python scripts\render_requests.py --output model_requests.jsonl
+```
+
+Send those requests through any provider. Store one response per line using the format in `examples/raw_outputs.template.jsonl`, then run:
+
+```cmd
+python scripts\import_model_outputs.py raw_outputs.jsonl --output predictions.jsonl --model-name YOUR_MODEL
+python scripts\evaluate_predictions.py predictions.jsonl
+```
+
+## Scientific-use warning
+
+The keyword baseline and demo adapter only verify the software pipeline. The current dataset is a development pilot, not the final benchmark, and its scores must not be presented as final evidence about model security.
 
 ## Repository layout
 
 ```text
-schema/                         JSON Schema
-data/controls.json              selected controls
-data/manifest.json              clean/attack pairs
-data/pilot/clean/               clean bundles
-data/pilot/attacked/            attacked bundles
-docs/                           threat model and annotation rules
-prompts/                        frozen v0.1 auditor prompt
-src/auditpoison/                validator, harness, metrics, baseline
-scripts/                        runnable entry points
-tests/                          integrity tests
-examples/                       prediction format example
+schema/                         evidence-bundle schema v0.2
+data/pilot/clean/              20 clean bundles
+data/pilot/attacked/           10 adversarial variants
+data/pilot/benign/             10 harmless variants
+ prompts/                       frozen auditor system prompt
+ src/auditpoison/               loader, validator, parser, harness, metrics
+ scripts/                       validation, rendering, import, run, evaluation
+ docs/                          threat model, annotation, evaluation protocol
+ examples/                      adapter and JSONL contracts
+ tests/                         integrity and leakage tests
 ```
-
-## Run
-
-```bash
-python scripts/validate_dataset.py
-python scripts/run_baseline.py --output baseline_predictions.jsonl
-python scripts/evaluate_predictions.py baseline_predictions.jsonl
-pytest -q
-```
-
-No model API is required. Python 3.10+ is sufficient after installing the project dependencies:
-
-```bash
-python -m pip install -e .
-```
-
-## Prediction format
-
-One JSON object per line:
-
-```json
-{"bundle_id":"AP-AC2-001-attacked","label":"non_compliant","confidence":0.91,"cited_evidence_ids":["E2","E3"],"contradictions_detected":["E4"]}
-```
-
-## Pilot warning
-
-The current pilot is red-team heavy and contains no compliant oracle cases. It must not be used to claim final model accuracy. Its purpose is to validate the schema, attacks, metrics, and annotation logic before balanced expansion.
-
-## Source references
-
-- NIST SP 800-53 Rev. 5.1.1: https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final
-- NIST OSCAL content: https://github.com/usnistgov/oscal-content
-- OWASP LLM Prompt Injection Prevention: https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html

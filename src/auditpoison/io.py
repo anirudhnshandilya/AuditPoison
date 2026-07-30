@@ -12,8 +12,7 @@ def load_json(path: str | Path) -> dict[str, Any]:
 
 def load_bundles(root: str | Path) -> list[dict[str, Any]]:
     root = Path(root)
-    paths = sorted((root / 'data' / 'pilot' / 'clean').glob('*.json'))
-    paths += sorted((root / 'data' / 'pilot' / 'attacked').glob('*.json'))
+    paths = sorted((root / 'data' / 'pilot').rglob('*.json'))
     return [load_json(path) for path in paths]
 
 

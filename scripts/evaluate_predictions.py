@@ -12,7 +12,10 @@ from auditpoison.metrics import evaluate_predictions
 
 parser = ArgumentParser()
 parser.add_argument('predictions')
+parser.add_argument('--variant', choices=['all', 'clean', 'attacked', 'benign'], default='all')
 args = parser.parse_args()
-
-result = evaluate_predictions(load_bundles(ROOT), read_jsonl(args.predictions))
+bundles = load_bundles(ROOT)
+if args.variant != 'all':
+    bundles = [b for b in bundles if b['variant'] == args.variant]
+result = evaluate_predictions(bundles, read_jsonl(args.predictions))
 print(json.dumps(result, indent=2))

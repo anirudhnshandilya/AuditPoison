@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: auditpoison
-Version: 0.1.0
-Summary: Day-1 pilot benchmark for adversarial evidence attacks on LLM cybersecurity auditors
+Version: 0.2.0
+Summary: Balanced pilot benchmark for adversarial evidence attacks on LLM cybersecurity auditors
 Requires-Python: >=3.10
 Requires-Dist: jsonschema>=4.18

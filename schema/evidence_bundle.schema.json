@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://auditpoison.example/schema/evidence_bundle.schema.json",
+  "$id": "https://auditpoison.example/schema/v0.2/evidence_bundle.schema.json",
   "title": "AuditPoison Evidence Bundle",
   "type": "object",
   "additionalProperties": false,
@@ -13,15 +13,16 @@
     "scope",
     "evidence",
     "oracle",
-    "attack"
+    "attack",
+    "perturbation"
   ],
   "properties": {
     "schema_version": {
-      "const": "0.1.0"
+      "const": "0.2.0"
     },
     "bundle_id": {
       "type": "string",
-      "pattern": "^AP-[A-Z]{2}-?[0-9]+-[0-9]{3}-(clean|attacked)$"
+      "pattern": "^AP-[A-Z]{2}-?[0-9]+-[0-9]{3}-(clean|attacked|benign)$"
     },
     "pair_id": {
       "type": "string",
@@ -30,7 +31,8 @@
     "variant": {
       "enum": [
         "clean",
-        "attacked"
+        "attacked",
+        "benign"
       ]
     },
     "control": {
@@ -352,6 +354,46 @@
         },
         "expected_secure_behavior": {
           "type": "string"
+        }
+      }
+    },
+    "perturbation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "present",
+        "family",
+        "target_evidence_ids",
+        "expected_invariant"
+      ],
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "family": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "formatting_noise",
+            "evidence_reordering",
+            "irrelevant_context",
+            "duplicate_support",
+            "semantic_paraphrase",
+            "metadata_noise"
+          ]
+        },
+        "target_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_invariant": {
+          "type": "string",
+          "minLength": 10
         }
       }
     }
