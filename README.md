@@ -142,3 +142,8 @@ tests/                Integrity, leakage, reproducibility, and defence tests
 ## Licence and citation
 
 AuditPoison is released under the MIT License. Citation metadata is provided in `CITATION.cff`.
+
+
+## Blinded holdout protocol
+
+The 40-bundle pilot is development data. The primary generalisation study uses a separately stored 60-bundle blinded holdout whose oracle labels and pair metadata are encrypted until all preregistered runs finish. The security-critical implementation is frozen through `scripts/freeze_holdout.py` before any holdout evaluation. See `docs/blinded_holdout_protocol.md`.
