@@ -1,5 +1,7 @@
 # AuditPoison
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21704967.svg)](https://doi.org/10.5281/zenodo.21704967)
+
 **Open-source benchmark and defence testbed for adversarial evidence attacks against LLM-based cybersecurity auditors, targeting ACM AsiaCCS 2027.**
 
 AuditPoison evaluates whether an AI auditor can be manipulated into providing false compliance assurance when policies, logs, tickets, exports, and other audit evidence contain malicious, stale, irrelevant, contradictory, or out-of-scope content.
