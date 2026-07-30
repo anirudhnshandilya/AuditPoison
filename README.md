@@ -1,20 +1,24 @@
-# AuditPoison — Day-2 Balanced Pilot
+# AuditPoison
 
-AuditPoison evaluates whether LLM-based cybersecurity auditors provide false compliance assurance when evidence is adversarial, and whether their decisions remain stable under harmless presentation changes.
+**Adversarial evidence attacks against LLM-based cybersecurity auditors.**
 
-## Day-2 contents
+AuditPoison evaluates whether an AI auditor can be manipulated into providing false compliance assurance when policies, logs, tickets, exports, and other audit evidence contain malicious, stale, irrelevant, contradictory, or out-of-scope content.
 
-- 40 evidence bundles across 20 paired scenarios;
-- 10 Day-1 clean/attacked red-team pairs;
-- 10 new compliant clean/benign-stability pairs;
-- all six attack families and six benign perturbation families;
-- schema v0.2.0 and stricter semantic validation;
-- a frozen auditor prompt that treats evidence as untrusted data;
-- prompt rendering that excludes oracle, attack, and perturbation metadata;
-- provider-neutral command and file-import evaluation paths;
-- three-class metrics, False Assurance Rate, paired Attack Success Rate, benign consistency, citation metrics, evidence-flagging metrics, and calibration diagnostics.
+## Day-3 release
 
-## Composition
+Version `0.3.0` provides an end-to-end, reproducible pilot:
+
+- 40 validated evidence bundles across 20 paired scenarios;
+- 10 adversarial clean/attacked pairs spanning six attack families;
+- 10 compliant clean/benign pairs spanning six harmless perturbation families;
+- three oracle labels: compliant, non-compliant, and insufficient evidence;
+- native Ollama and OpenAI-compatible model adapters;
+- provider-neutral command and offline import paths;
+- cryptographic run manifests and verification;
+- paper-ready Markdown and LaTeX result tables;
+- GitHub Actions validation across Python 3.10–3.13.
+
+## Dataset composition
 
 | Oracle label | Bundles |
 |---|---:|
@@ -22,15 +26,15 @@ AuditPoison evaluates whether LLM-based cybersecurity auditors provide false com
 | Non-compliant | 15 |
 | Insufficient evidence | 5 |
 
-This is balanced at the false-assurance boundary: 20 compliant bundles and 20 bundles for which a compliant decision would be unsafe.
+The pilot is balanced at the false-assurance boundary: 20 bundles support compliance and 20 bundles make a compliant verdict unsafe.
 
 ## Windows setup
 
-If the ZIP extracts into an extra folder, enter the inner project directory containing `pyproject.toml`.
+After extraction, enter the **inner folder containing `pyproject.toml`**:
 
 ```cmd
-cd AuditPoison-Day2
-python -m pip install -e .
+cd AuditPoison-Day3\AuditPoison-Day3
+python -m pip install -e ".[dev]"
 python scripts\validate_dataset.py
 python -m pytest -q
 ```
@@ -38,63 +42,82 @@ python -m pytest -q
 ## Offline smoke test
 
 ```cmd
-python scripts\run_experiment.py --adapter keyword --output baseline_predictions.jsonl
-python scripts\evaluate_predictions.py baseline_predictions.jsonl
+python scripts\run_model.py --adapter keyword --output results\keyword_predictions.jsonl
+python scripts\evaluate_predictions.py results\keyword_predictions.jsonl --output results\keyword_metrics.json
+python scripts\verify_run.py results\keyword_predictions.manifest.json
+python scripts\build_paper_table.py results\keyword_metrics.json
 ```
 
-## Provider-neutral model workflow
+## Run a local LLM with Ollama
 
-### Option A: command adapter
-
-Create a wrapper that reads this object from stdin:
-
-```json
-{"bundle_id":"...","system_prompt":"...","user_prompt":"..."}
-```
-
-and writes a model response:
-
-```json
-{"label":"non_compliant","confidence":0.91,"cited_evidence_ids":["E2","E3"],"flagged_evidence_ids":["E4"],"rationale":"..."}
-```
-
-Test the contract offline:
+Install Ollama, make sure its service is running, and pull a model appropriate for your hardware. Then run:
 
 ```cmd
-python scripts\run_experiment.py --adapter command --output demo_predictions.jsonl --model-name demo --command python examples\demo_command_adapter.py
-python scripts\evaluate_predictions.py demo_predictions.jsonl
+python scripts\run_model.py --adapter ollama --model YOUR_MODEL --output results\YOUR_MODEL_predictions.jsonl
+python scripts\evaluate_predictions.py results\YOUR_MODEL_predictions.jsonl --output results\YOUR_MODEL_metrics.json
 ```
 
-Replace the demo script with your API or local-model wrapper for a real run.
-
-### Option B: render and import
+Start with a two-bundle contract check before the full run:
 
 ```cmd
-python scripts\render_requests.py --output model_requests.jsonl
+python scripts\run_model.py --adapter ollama --model YOUR_MODEL --limit 2 --output results\ollama_test.jsonl
 ```
 
-Send those requests through any provider. Store one response per line using the format in `examples/raw_outputs.template.jsonl`, then run:
+## Run a hosted OpenAI-compatible endpoint
+
+Set the key only in the current terminal session:
 
 ```cmd
-python scripts\import_model_outputs.py raw_outputs.jsonl --output predictions.jsonl --model-name YOUR_MODEL
-python scripts\evaluate_predictions.py predictions.jsonl
+set AUDITPOISON_API_KEY=YOUR_KEY
+python scripts\run_model.py --adapter openai-compatible --model YOUR_MODEL --base-url https://api.openai.com/v1 --output results\hosted_predictions.jsonl
+python scripts\evaluate_predictions.py results\hosted_predictions.jsonl --output results\hosted_metrics.json
 ```
+
+Do not commit API keys. The runner records endpoint configuration but never the key.
+
+## Build a multi-model paper table
+
+```cmd
+python scripts\build_paper_table.py results\model_a_metrics.json results\model_b_metrics.json results\model_c_metrics.json
+```
+
+Outputs:
+
+- `results/table_main.md`
+- `results/table_main.tex`
+
+## Publish Day 1–3 to GitHub
+
+Use one repository with three commits and three annotated tags. See [`docs/github_setup.md`](docs/github_setup.md), or run the supplied PowerShell history-bootstrap script.
+
+## Core metrics
+
+- clean three-class accuracy and macro F1;
+- False Assurance Rate;
+- paired Attack Success Rate and robust accuracy;
+- benign label consistency and both-correct rate;
+- citation precision, recall, and F1;
+- adversarial evidence detection recall;
+- confidence Brier score and expected calibration error.
 
 ## Scientific-use warning
 
-The keyword baseline and demo adapter only verify the software pipeline. The current dataset is a development pilot, not the final benchmark, and its scores must not be presented as final evidence about model security.
+The keyword baseline is only a software smoke test. The 40-bundle dataset is a development pilot and must not be presented as the final benchmark or as statistically conclusive evidence about any model family.
 
 ## Repository layout
 
 ```text
-schema/                         evidence-bundle schema v0.2
-data/pilot/clean/              20 clean bundles
-data/pilot/attacked/           10 adversarial variants
-data/pilot/benign/             10 harmless variants
- prompts/                       frozen auditor system prompt
- src/auditpoison/               loader, validator, parser, harness, metrics
- scripts/                       validation, rendering, import, run, evaluation
- docs/                          threat model, annotation, evaluation protocol
- examples/                      adapter and JSONL contracts
- tests/                         integrity and leakage tests
+.github/workflows/              continuous integration
+schema/                         evidence-bundle schema
+data/pilot/                     clean, attacked, and benign bundles
+prompts/                        frozen auditor prompt
+src/auditpoison/              loaders, adapters, metrics, manifests, reporting
+scripts/                        validation, model runs, evaluation, Git history
+results/                        generated metrics and paper tables
+docs/                           threat model and protocols
+tests/                          integrity, leakage, and reproducibility tests
 ```
+
+## Licence and citation
+
+AuditPoison is released under the MIT License. Citation metadata is provided in `CITATION.cff`.

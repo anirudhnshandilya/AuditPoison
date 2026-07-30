@@ -118,5 +118,8 @@
       "label_consistency": 1.0,
       "both_correct_rate": 1.0
     }
-  }
+  },
+  "model": "keyword-baseline-v0.2",
+  "provider": "offline",
+  "predictions_file": "results/keyword_predictions.jsonl"
 }

@@ -2,5 +2,14 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
-*.jsonl
-!examples/*.jsonl
+venv/
+.env
+*.egg-info/
+build/
+dist/
+results/*_predictions.jsonl
+results/*_predictions.manifest.json
+results/*_raw*.jsonl
+!results/keyword_smoke_metrics.json
+!results/table_main.md
+!results/table_main.tex

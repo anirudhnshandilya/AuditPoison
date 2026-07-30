@@ -44,4 +44,5 @@ class KeywordBaseline:
             cited_evidence_ids=cited[:4],
             flagged_evidence_ids=[],
             rationale='Keyword smoke-test decision.',
+            provider='offline',
         )
