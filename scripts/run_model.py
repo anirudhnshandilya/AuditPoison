@@ -29,6 +29,11 @@ parser.add_argument("--base-url", default=None)
 parser.add_argument("--api-key-env", default="AUDITPOISON_API_KEY")
 parser.add_argument("--temperature", type=float, default=0.0)
 parser.add_argument("--seed", type=int, default=7)
+parser.add_argument(
+    "--ollama-think",
+    action="store_true",
+    help="Enable the model's native thinking mode for Ollama runs (disabled by default).",
+)
 parser.add_argument("--timeout", type=float, default=180.0)
 parser.add_argument("--max-retries", type=int, default=3)
 parser.add_argument("--command", nargs=REMAINDER, help="External command; must be the final argument")
@@ -59,6 +64,7 @@ elif args.adapter == "ollama":
         base_url=args.base_url or "http://localhost:11434/api",
         temperature=args.temperature,
         seed=args.seed,
+        think=args.ollama_think,
         timeout=args.timeout,
         max_retries=args.max_retries,
     )
@@ -91,6 +97,7 @@ config = {
     "limit": args.limit,
     "temperature": args.temperature,
     "seed": args.seed,
+    "ollama_think": args.ollama_think if args.adapter == "ollama" else None,
     "timeout_seconds": args.timeout,
     "max_retries": args.max_retries,
     "base_url": args.base_url,

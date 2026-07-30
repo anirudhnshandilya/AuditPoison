@@ -91,6 +91,7 @@ class OllamaAdapter:
         base_url: str = "http://localhost:11434/api",
         temperature: float = 0.0,
         seed: int = 7,
+        think: bool = False,
         timeout: float = 180.0,
         max_retries: int = 2,
     ) -> None:
@@ -99,6 +100,7 @@ class OllamaAdapter:
         self.base_url = base_url.rstrip("/")
         self.temperature = temperature
         self.seed = seed
+        self.think = think
         self.timeout = timeout
         self.max_retries = max_retries
 
@@ -115,6 +117,7 @@ class OllamaAdapter:
                 {"role": "user", "content": request["user_prompt"]},
             ],
             "stream": False,
+            "think": self.think,
             "format": OUTPUT_JSON_SCHEMA,
             "options": {"temperature": self.temperature, "seed": self.seed},
         }
