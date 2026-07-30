@@ -6,21 +6,29 @@
 
 AuditPoison evaluates whether an AI auditor can be manipulated into providing false compliance assurance when policies, logs, tickets, exports, and other audit evidence contain malicious, stale, irrelevant, contradictory, or out-of-scope content.
 
-> **Research status:** version 0.4.0 is a development pilot. It is not production compliance advice and its smoke-test results are not scientific model comparisons.
+> **Research status:** version 0.5.0 is a development pilot. It is not production compliance advice, and pilot contract results are not evidence of real-world generalisation.
 
-## Version 0.4.0
+## EvidenceShield v0.2
 
-This release adds **EvidenceShield v0.1**, a provenance-aware defence wrapper with:
+Version `0.5.0` removes final compliance authority from the language model.
 
-- scope and assessment-period screening;
-- instruction-like content quarantine;
-- unsupported authority-claim detection;
-- provenance and integrity labelling;
-- model-visible trust annotations;
-- a conservative positive-assurance gate;
-- defence comparison tooling and regression tests.
+EvidenceShield now:
 
-The benchmark remains frozen at 40 bundles across 20 paired scenarios so the defence can be evaluated without changing the underlying pilot.
+- screens provenance, scope, environment, and assessment-period validity;
+- quarantines unsupported authority claims and untrusted instructions;
+- sanitizes instruction-bearing comments inside verified technical exports;
+- evaluates explicit control predicates as `satisfied`, `failed`, or `unresolved`;
+- assigns the final label deterministically;
+- records the model’s original advisory label for ablation analysis;
+- preserves EvidenceShield v0.1 for reproducing the provenance-only defence.
+
+Deterministic verdict policy:
+
+```text
+Any failed predicate        -> non_compliant
+No failures, any unresolved -> insufficient_evidence
+All predicates satisfied    -> compliant
+```
 
 ## Benchmark composition
 
@@ -66,45 +74,39 @@ python scripts/validate_dataset.py
 python -m pytest -q
 ```
 
-Expected: 40 bundles, 20 pairs, and 20 tests passing.
+Expected: 40 bundles, 20 pairs, and 31 tests passing.
 
-## Inspect EvidenceShield
-
-```bash
-python scripts/inspect_defense.py --bundle-id AP-AC2-001-attacked
-```
-
-## Compare unshielded and shielded smoke tests
+## Inspect deterministic predicates
 
 ```bash
-python scripts/run_model.py --adapter keyword --output results/keyword_raw_predictions.jsonl
-python scripts/evaluate_predictions.py results/keyword_raw_predictions.jsonl --output results/keyword_raw_metrics.json
-
-python scripts/run_model.py --adapter keyword --defense evidenceshield --output results/keyword_shield_predictions.jsonl
-python scripts/evaluate_predictions.py results/keyword_shield_predictions.jsonl --output results/keyword_shield_metrics.json
-
-python scripts/compare_defenses.py results/keyword_raw_metrics.json results/keyword_shield_metrics.json
-python scripts/build_paper_table.py results/keyword_raw_metrics.json results/keyword_shield_metrics.json
+python scripts/inspect_predicates.py --bundle-id AP-IA2-005-attacked
 ```
 
-The keyword adapter is a deterministic software smoke test, not a research baseline.
+## Run model experiments
 
-## Run a real local model
+Unshielded:
 
 ```bash
-python scripts/run_model.py --adapter ollama --model YOUR_MODEL --limit 2 --output results/ollama_test.jsonl
-python scripts/run_model.py --adapter ollama --model YOUR_MODEL --defense evidenceshield --output results/ollama_shield_predictions.jsonl
+python scripts/run_model.py --adapter ollama --model YOUR_MODEL --defense none --output results/model_unshielded.jsonl
 ```
 
-## Run an OpenAI-compatible endpoint
-
-Set `AUDITPOISON_API_KEY` only in the current shell, then run:
+Historical EvidenceShield v0.1 ablation:
 
 ```bash
-python scripts/run_model.py --adapter openai-compatible --model YOUR_MODEL --base-url YOUR_BASE_URL --defense evidenceshield --output results/hosted_shield_predictions.jsonl
+python scripts/run_model.py --adapter ollama --model YOUR_MODEL --defense evidenceshield-v0.1 --output results/model_v01.jsonl
 ```
 
-AuditPoison never writes the API key to predictions or manifests.
+EvidenceShield v0.2:
+
+```bash
+python scripts/run_model.py --adapter ollama --model YOUR_MODEL --defense evidenceshield-v0.2 --output results/model_v02.jsonl
+```
+
+`--defense evidenceshield` is an alias for `evidenceshield-v0.2`.
+
+## Important interpretation rule
+
+The v0.2 predicate engine is explicitly designed for the frozen structured pilot. A 100% contract-test result on these 40 bundles demonstrates implementation consistency only. It must not be presented as benchmark generalisation or production effectiveness.
 
 ## Core metrics
 
@@ -120,12 +122,12 @@ AuditPoison never writes the API key to predictions or manifests.
 
 ```text
 data/pilot/           Evidence bundles
-docs/                 Threat model, protocols, and EvidenceShield design
-prompts/              Frozen auditor prompts
-results/              Metrics and paper tables
+docs/                 Threat model, protocols, and EvidenceShield designs
+prompts/              Frozen auditor and analyst prompts
+results/              Local metrics and paper tables
 schema/               Evidence-bundle JSON Schema
-scripts/              Validation, experiments, comparison, and reporting
-src/auditpoison/      Python package and defence implementation
+scripts/              Validation, experiments, inspection, and reporting
+src/auditpoison/      Python package, screening, and predicate engine
 tests/                Integrity, leakage, reproducibility, and defence tests
 ```
 
@@ -134,7 +136,8 @@ tests/                Integrity, leakage, reproducibility, and defence tests
 - `v0.1.0` — threat model and adversarial pilot
 - `v0.2.0` — balanced benchmark and evaluation pipeline
 - `v0.3.0` — real-model adapters and reproducibility manifests
-- `v0.4.0` — EvidenceShield provenance firewall and assurance gate
+- `v0.4.0` — EvidenceShield v0.1 provenance firewall
+- `v0.5.0` — EvidenceShield v0.2 deterministic predicate adjudication
 
 ## Licence and citation
 

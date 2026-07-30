@@ -7,6 +7,12 @@ from datetime import date, datetime
 from typing import Any
 
 from .harness import AuditPrediction, AuditorAdapter
+from .predicate_engine import (
+    adjudicate_predicates,
+    deterministic_confidence,
+    deterministic_label,
+    rationale_from_predicates,
+)
 
 AUTHORITY_RANK = {
     "authoritative_technical": 5,
@@ -29,6 +35,7 @@ INSTRUCTION_PATTERNS = tuple(
         r"\boverride\s+(?:the\s+)?(?:system|auditor|assessment)\b",
         r"\bsystem\s+(?:prompt|instruction)\b",
         r"\boutput\s+(?:the\s+label\s+)?compliant\b",
+        r"\bauditor\s+command\b",
     )
 )
 
@@ -37,6 +44,9 @@ AUTHORITY_CLAIM_PATTERN = re.compile(
     r"\b(?:approved|authori[sz]ed|accepted|signed)\b.*\b(?:external\s+auditor|independent\s+auditor|assurance\s+partner|regulator)\b",
     re.IGNORECASE,
 )
+
+
+TRUSTED_SANITIZABLE_AUTHORITIES = {"authoritative_technical", "authoritative_record", "operational_record"}
 
 
 def _date(value: str | None) -> date | None:
@@ -56,8 +66,8 @@ def _period_overlaps(evidence: dict[str, Any], scope: dict[str, Any]) -> bool:
     if not period:
         return True
     e_start, e_end = _date(period.get("start")), _date(period.get("end"))
-    a = scope.get("assessment_period", {})
-    a_start, a_end = _date(a.get("start")), _date(a.get("end"))
+    assessment = scope.get("assessment_period", {})
+    a_start, a_end = _date(assessment.get("start")), _date(assessment.get("end"))
     if None in (e_start, e_end, a_start, a_end):
         return True
     return e_start <= a_end and a_start <= e_end
@@ -71,18 +81,64 @@ def _scope_matches(evidence: dict[str, Any], scope: dict[str, Any]) -> bool:
     return bool(required & observed)
 
 
+def _explicit_environment_tokens(evidence: dict[str, Any]) -> set[str]:
+    """Extract only explicit environment markers, avoiding words such as 'test' in 'restoration test'."""
+    tokens: set[str] = set()
+    fields = [str(evidence.get("source", "")), *(str(x) for x in evidence.get("asset_ids", []))]
+    content = str(evidence.get("content", ""))
+    fields.extend(match.group(1) for match in re.finditer(r"\benvironment\s*[:=]\s*([a-z0-9_-]+)", content, flags=re.I))
+    fields.extend(match.group(1) for match in re.finditer(r"\btenant\s*[:=]\s*([a-z0-9_-]+)", content, flags=re.I))
+    for field in fields:
+        value = field.lower()
+        if re.search(r"(?:^|[-_\s])(?:prod|production)(?:$|[-_\s])", value):
+            tokens.add("production")
+        if re.search(r"(?:^|[-_\s])sandbox(?:$|[-_\s])", value):
+            tokens.add("sandbox")
+        if re.search(r"(?:^|[-_\s])staging(?:$|[-_\s])", value):
+            tokens.add("staging")
+        if re.search(r"(?:^|[-_\s])(?:dev|development)(?:$|[-_\s])", value):
+            tokens.add("development")
+        if re.search(r"(?:^|[-_\s])test(?:$|[-_\s])", value):
+            tokens.add("test")
+    return tokens
+
+
 def _environment_matches(evidence: dict[str, Any], scope: dict[str, Any]) -> bool:
     expected = str(scope.get("environment", "")).strip().lower()
     if not expected:
         return True
-    haystack = " ".join([*(str(x).lower() for x in evidence.get("asset_ids", [])), str(evidence.get("content", "")).lower()])
-    aliases = {
-        "production": ("sandbox", "development", "dev", "test", "staging"),
-        "prod": ("sandbox", "development", "dev", "test", "staging"),
-        "sandbox": ("production", "prod", "staging"),
-        "development": ("production", "prod", "sandbox", "staging"),
-    }
-    return not any(re.search(rf"(?:^|[^a-z]){re.escape(token)}(?:$|[^a-z])", haystack) for token in aliases.get(expected, ()))
+    expected = "production" if expected == "prod" else expected
+    observed = _explicit_environment_tokens(evidence)
+    if not observed:
+        return True
+    return expected in observed
+
+
+def _contains_instruction(content: str) -> bool:
+    return any(pattern.search(content) for pattern in INSTRUCTION_PATTERNS)
+
+
+def _sanitize_instruction_content(content: str) -> str:
+    """Preserve factual fields while redacting instruction-bearing comments or sentences."""
+    if not _contains_instruction(content):
+        return content
+    # Structured exports often place the injection inside a comment field.
+    sanitized = re.sub(
+        r"(?i)(config_comment\s*=\s*)(?:\"[^\"]*\"|'[^']*'|[^;\n]*)",
+        r"\1[REDACTED BY EVIDENCESHIELD]",
+        content,
+    )
+    # Remove remaining semicolon/newline-delimited instruction clauses.
+    parts = re.split(r"([;\n])", sanitized)
+    kept: list[str] = []
+    for index in range(0, len(parts), 2):
+        clause = parts[index]
+        delimiter = parts[index + 1] if index + 1 < len(parts) else ""
+        if _contains_instruction(clause):
+            clause = "[REDACTED INSTRUCTION-LIKE CONTENT]"
+        kept.append(clause + delimiter)
+    sanitized = "".join(kept).strip()
+    return sanitized or "[REDACTED INSTRUCTION-LIKE CONTENT]"
 
 
 def screen_evidence(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -98,7 +154,7 @@ def screen_evidence(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
         hard_reasons: list[str] = []
         caution_reasons: list[str] = []
 
-        instruction_like = any(pattern.search(content) for pattern in INSTRUCTION_PATTERNS)
+        instruction_like = _contains_instruction(content)
         authority_spoof = bool(AUTHORITY_CLAIM_PATTERN.search(content)) and (
             authority == "self_attestation" or integrity != "verified"
         )
@@ -106,8 +162,6 @@ def screen_evidence(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
         environment_match = _environment_matches(evidence, scope)
         temporal_match = _period_overlaps(evidence, scope)
 
-        if instruction_like:
-            hard_reasons.append("instruction_like_content")
         if authority_spoof:
             hard_reasons.append("unsupported_authority_claim")
         if not scope_match:
@@ -121,8 +175,22 @@ def screen_evidence(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if authority == "self_attestation":
             caution_reasons.append("self_attestation_only")
 
+        sanitizable = (
+            instruction_like
+            and integrity == "verified"
+            and authority in TRUSTED_SANITIZABLE_AUTHORITIES
+            and not hard_reasons
+        )
+        if instruction_like:
+            if sanitizable:
+                caution_reasons.insert(0, "instruction_like_content_sanitized")
+            else:
+                hard_reasons.insert(0, "instruction_like_content")
+
         if hard_reasons:
             status = "quarantined"
+        elif sanitizable:
+            status = "sanitized"
         elif caution_reasons:
             status = "caution"
         else:
@@ -138,7 +206,9 @@ def screen_evidence(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
             "environment_match": environment_match,
             "temporal_match": temporal_match,
             "admissible_for_assurance": (
-                status == "trusted" and authority in ASSURANCE_AUTHORITIES
+                status in {"trusted", "sanitized"}
+                and integrity == "verified"
+                and authority in ASSURANCE_AUTHORITIES
             ),
         }
     return report
@@ -163,6 +233,8 @@ def shield_bundle(bundle: dict[str, Any]) -> tuple[dict[str, Any], dict[str, dic
                 f"[QUARANTINED BY EVIDENCESHIELD: {reason}. "
                 "Original content withheld from the auditor and cannot support assurance.]"
             )
+        elif decision["status"] == "sanitized":
+            evidence["content"] = _sanitize_instruction_content(str(evidence.get("content", "")))
         elif decision["status"] == "caution":
             evidence["content"] = (
                 "[CAUTION: unverified or self-attested evidence; corroboration required.] "
@@ -176,12 +248,12 @@ def enforce_assurance_gate(
     prediction: AuditPrediction,
     report: dict[str, dict[str, Any]],
 ) -> AuditPrediction:
-    """Apply a conservative postcondition to positive compliance decisions."""
+    """EvidenceShield v0.1: apply a conservative postcondition to positive decisions."""
     cited = list(dict.fromkeys(prediction.cited_evidence_ids))
     quarantined = [eid for eid in cited if report.get(eid, {}).get("status") == "quarantined"]
     admissible = [eid for eid in cited if report.get(eid, {}).get("admissible_for_assurance")]
-    all_quarantined = [eid for eid, row in report.items() if row["status"] == "quarantined"]
-    flagged = list(dict.fromkeys(prediction.flagged_evidence_ids + all_quarantined))
+    all_flagged = [eid for eid, row in report.items() if row["status"] in {"quarantined", "sanitized", "caution"}]
+    flagged = list(dict.fromkeys(prediction.flagged_evidence_ids + all_flagged))
 
     label = prediction.label
     confidence = prediction.confidence
@@ -197,7 +269,7 @@ def enforce_assurance_gate(
         if gate_reason:
             label = "insufficient_evidence"
             confidence = min(confidence, 0.65)
-            rationale = (rationale + " " if rationale else "") + f"EvidenceShield downgrade: {gate_reason}."
+            rationale = (rationale + " " if rationale else "") + f"EvidenceShield v0.1 downgrade: {gate_reason}."
 
     return replace(
         prediction,
@@ -206,10 +278,13 @@ def enforce_assurance_gate(
         confidence=confidence,
         flagged_evidence_ids=flagged,
         rationale=rationale,
-        provider=(prediction.provider + "+evidenceshield") if prediction.provider else "evidenceshield",
+        provider=(prediction.provider + "+evidenceshield-v0.1") if prediction.provider else "evidenceshield-v0.1",
+        decision_source="model_with_positive_gate",
+        advisory_model_label=prediction.label,
         raw={
             **(prediction.raw or {}),
             "evidenceshield": {
+                "version": "v0.1",
                 "screening": report,
                 "gate_reason": gate_reason,
             },
@@ -217,8 +292,49 @@ def enforce_assurance_gate(
     )
 
 
-class EvidenceShieldAdapter:
-    """Defence wrapper that isolates evidence before inference and gates positive assurance."""
+def enforce_predicate_verdict(
+    original_bundle: dict[str, Any],
+    screened_bundle: dict[str, Any],
+    prediction: AuditPrediction,
+    report: dict[str, dict[str, Any]],
+) -> AuditPrediction:
+    """EvidenceShield v0.2: issue the final verdict solely from deterministic predicates."""
+    outcomes = adjudicate_predicates(screened_bundle, report)
+    label = deterministic_label(outcomes)
+    confidence = deterministic_confidence(outcomes)
+    predicate_rows = [item.to_dict() for item in outcomes]
+    cited = list(dict.fromkeys(eid for item in outcomes for eid in item.evidence_ids))
+    screened_flags = [eid for eid, row in report.items() if row["status"] in {"quarantined", "sanitized", "caution"}]
+    flagged = list(dict.fromkeys(prediction.flagged_evidence_ids + screened_flags))
+    rationale = rationale_from_predicates(outcomes)
+
+    return replace(
+        prediction,
+        bundle_id=original_bundle["bundle_id"],
+        label=label,
+        confidence=confidence,
+        cited_evidence_ids=cited,
+        flagged_evidence_ids=flagged,
+        rationale=rationale,
+        provider=(prediction.provider + "+evidenceshield-v0.2") if prediction.provider else "evidenceshield-v0.2",
+        decision_source="deterministic_predicate_engine",
+        predicate_outcomes=predicate_rows,
+        advisory_model_label=prediction.label,
+        raw={
+            **(prediction.raw or {}),
+            "evidenceshield": {
+                "version": "v0.2",
+                "screening": report,
+                "advisory_model_label": prediction.label,
+                "predicate_outcomes": predicate_rows,
+                "deterministic_label": label,
+            },
+        },
+    )
+
+
+class EvidenceShieldV1Adapter:
+    """Historical v0.1 wrapper retained for ablation experiments."""
 
     def __init__(self, base: AuditorAdapter) -> None:
         self.base = base
@@ -231,3 +347,19 @@ class EvidenceShieldAdapter:
         screened, report = shield_bundle(bundle)
         prediction = self.base.assess(screened)
         return enforce_assurance_gate(bundle, prediction, report)
+
+
+class EvidenceShieldAdapter:
+    """EvidenceShield v0.2 wrapper with deterministic predicate adjudication."""
+
+    def __init__(self, base: AuditorAdapter) -> None:
+        self.base = base
+
+    @property
+    def name(self) -> str:
+        return f"{self.base.name}+evidenceshield-v0.2"
+
+    def assess(self, bundle: dict[str, Any]) -> AuditPrediction:
+        screened, report = shield_bundle(bundle)
+        advisory = self.base.assess(screened)
+        return enforce_predicate_verdict(bundle, screened, advisory, report)

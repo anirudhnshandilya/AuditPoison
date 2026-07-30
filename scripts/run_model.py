@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from auditpoison.baseline import KeywordBaseline
-from auditpoison.defense import EvidenceShieldAdapter
+from auditpoison.defense import EvidenceShieldAdapter, EvidenceShieldV1Adapter
 from auditpoison.harness import CommandAdapter, evaluate_adapter
 from auditpoison.io import append_jsonl, load_bundles, read_jsonl
 from auditpoison.prompting import load_system_prompt
@@ -20,7 +20,7 @@ from auditpoison.repro import build_run_manifest, verify_manifest, write_manifes
 
 parser = ArgumentParser(description="Run AuditPoison with a reproducible model configuration.")
 parser.add_argument("--adapter", choices=["keyword", "command", "ollama", "openai-compatible"], required=True)
-parser.add_argument("--defense", choices=["none", "evidenceshield"], default="none")
+parser.add_argument("--defense", choices=["none", "evidenceshield", "evidenceshield-v0.1", "evidenceshield-v0.2"], default="none")
 parser.add_argument("--model", default="keyword-smoke")
 parser.add_argument("--output", default="predictions.jsonl")
 parser.add_argument("--manifest", default=None)
@@ -49,7 +49,8 @@ if args.limit is not None:
         parser.error("--limit must be positive")
     bundles = bundles[: args.limit]
 
-prompt_version = "v0.3" if args.defense == "evidenceshield" else "v0.2"
+normalized_defense = "evidenceshield-v0.2" if args.defense == "evidenceshield" else args.defense
+prompt_version = {"none": "v0.2", "evidenceshield-v0.1": "v0.3", "evidenceshield-v0.2": "v0.4"}[normalized_defense]
 system_prompt = load_system_prompt(ROOT, prompt_version)
 if args.adapter == "keyword":
     adapter = KeywordBaseline()
@@ -87,7 +88,9 @@ else:
     )
     provider = "openai-compatible"
 
-if args.defense == "evidenceshield":
+if normalized_defense == "evidenceshield-v0.1":
+    adapter = EvidenceShieldV1Adapter(adapter)
+elif normalized_defense == "evidenceshield-v0.2":
     adapter = EvidenceShieldAdapter(adapter)
 
 output = Path(args.output)

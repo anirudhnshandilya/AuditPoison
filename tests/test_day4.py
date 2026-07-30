@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from auditpoison.defense import EvidenceShieldAdapter, enforce_assurance_gate, screen_evidence, shield_bundle
+from auditpoison.defense import EvidenceShieldV1Adapter, enforce_assurance_gate, screen_evidence, shield_bundle
 from auditpoison.harness import AuditPrediction
 from auditpoison.io import load_bundles
 
@@ -82,7 +82,7 @@ class AlwaysCompliant:
 
 def test_wrapper_exposes_defence_name_and_gate(project_root):
     bundle = _bundle(project_root, "AP-AC2-001-attacked")
-    adapter = EvidenceShieldAdapter(AlwaysCompliant())
+    adapter = EvidenceShieldV1Adapter(AlwaysCompliant())
     out = adapter.assess(bundle)
     assert "evidenceshield" in adapter.name
     assert out.label == "insufficient_evidence"

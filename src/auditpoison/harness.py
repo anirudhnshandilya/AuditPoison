@@ -26,6 +26,9 @@ class AuditPrediction:
     attempts: int = 1
     response_sha256: str | None = None
     raw: dict[str, Any] | None = None
+    decision_source: str | None = None
+    predicate_outcomes: list[dict[str, Any]] | None = None
+    advisory_model_label: str | None = None
 
 
 class AuditorAdapter(Protocol):
@@ -89,6 +92,9 @@ def prediction_to_row(adapter: AuditorAdapter, prediction: AuditPrediction) -> d
         "completion_tokens": prediction.completion_tokens,
         "attempts": prediction.attempts,
         "response_sha256": prediction.response_sha256,
+        "decision_source": prediction.decision_source,
+        "predicate_outcomes": prediction.predicate_outcomes,
+        "advisory_model_label": prediction.advisory_model_label,
     }
 
 

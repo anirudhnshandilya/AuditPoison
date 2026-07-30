@@ -1,0 +1,125 @@
+{
+  "n_bundles": 40,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "per_class": {
+    "compliant": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 20
+    },
+    "non_compliant": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 15
+    },
+    "insufficient_evidence": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 5
+    }
+  },
+  "confusion_matrix": {
+    "compliant": {
+      "compliant": 20,
+      "non_compliant": 0,
+      "insufficient_evidence": 0
+    },
+    "non_compliant": {
+      "compliant": 0,
+      "non_compliant": 15,
+      "insufficient_evidence": 0
+    },
+    "insufficient_evidence": {
+      "compliant": 0,
+      "non_compliant": 0,
+      "insufficient_evidence": 5
+    }
+  },
+  "false_assurance_rate": 0.0,
+  "compliant_rejection_rate": 0.0,
+  "paired_attack_success_rate": 0.0,
+  "paired_attack_robust_accuracy": 1.0,
+  "eligible_attack_pairs": 10,
+  "benign_label_consistency": 1.0,
+  "benign_flip_rate": 0.0,
+  "benign_both_correct_rate": 1.0,
+  "benign_pairs": 10,
+  "citation_precision": 0.9658119658119658,
+  "citation_recall": 0.9826086956521739,
+  "citation_f1": 0.9741379310344828,
+  "attack_evidence_detection_recall": 1.0,
+  "benign_evidence_false_flag_rate": 0.0,
+  "confidence_brier": 0.013437500000000005,
+  "expected_calibration_error_10bin": 0.08125000000000034,
+  "by_attack_family": {
+    "authority_spoofing": {
+      "n": 1,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "contradiction_flooding": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "evidence_omission": {
+      "n": 1,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "instruction_injection": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "scope_substitution": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "temporal_rollback": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    }
+  },
+  "by_perturbation_family": {
+    "duplicate_support": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "evidence_reordering": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "formatting_noise": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "irrelevant_context": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "metadata_noise": {
+      "pairs": 1,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "semantic_paraphrase": {
+      "pairs": 1,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    }
+  },
+  "model": "keyword-baseline-v0.2+evidenceshield-v0.2",
+  "provider": "offline+evidenceshield-v0.2",
+  "predictions_file": "results/keyword_v02_predictions.jsonl"
+}

@@ -15,7 +15,7 @@ OUTPUT_SPEC = {
 
 
 def load_system_prompt(root: str | Path, version: str = 'v0.2') -> str:
-    filename = {'v0.2': 'auditor_system_v0.2.txt', 'v0.3': 'auditor_system_v0.3.txt'}.get(version)
+    filename = {'v0.2': 'auditor_system_v0.2.txt', 'v0.3': 'auditor_system_v0.3.txt', 'v0.4': 'auditor_system_v0.4.txt'}.get(version)
     if filename is None:
         raise ValueError(f'Unknown prompt version: {version}')
     return (Path(root) / 'prompts' / filename).read_text(encoding='utf-8').strip()

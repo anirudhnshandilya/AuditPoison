@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0] - 2026-07-30
+
+### Added
+- EvidenceShield v0.2 deterministic predicate adjudication for all ten pilot controls.
+- Predicate traces, advisory-model labels, and decision-source fields in prediction rows.
+- EvidenceShield v0.1/v0.2 ablation options and frozen analyst prompt v0.4.
+- Predicate inspection tooling and seven regression tests.
+
+### Fixed
+- Environment false positives caused by ordinary uses of the word “test”.
+- Destructive quarantine of verified technical exports containing injected comments.
+- Unsafe model-label and rationale inconsistencies in final verdicts.
+
 ## [0.4.0] - 2026-07-30
 
 ### Added
