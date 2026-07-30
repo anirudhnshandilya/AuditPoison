@@ -1,0 +1,125 @@
+{
+  "n_bundles": 40,
+  "accuracy": 0.9,
+  "macro_f1": 0.8967341725962417,
+  "per_class": {
+    "compliant": {
+      "precision": 0.8636363636363636,
+      "recall": 0.95,
+      "f1": 0.9047619047619048,
+      "support": 20
+    },
+    "non_compliant": {
+      "precision": 0.9285714285714286,
+      "recall": 0.8666666666666667,
+      "f1": 0.896551724137931,
+      "support": 15
+    },
+    "insufficient_evidence": {
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.888888888888889,
+      "support": 5
+    }
+  },
+  "confusion_matrix": {
+    "compliant": {
+      "compliant": 19,
+      "non_compliant": 1,
+      "insufficient_evidence": 0
+    },
+    "non_compliant": {
+      "compliant": 2,
+      "non_compliant": 13,
+      "insufficient_evidence": 0
+    },
+    "insufficient_evidence": {
+      "compliant": 1,
+      "non_compliant": 0,
+      "insufficient_evidence": 4
+    }
+  },
+  "false_assurance_rate": 0.15,
+  "compliant_rejection_rate": 0.05,
+  "paired_attack_success_rate": 0.1111111111111111,
+  "paired_attack_robust_accuracy": 0.8888888888888888,
+  "eligible_attack_pairs": 9,
+  "benign_label_consistency": 0.9,
+  "benign_flip_rate": 0.09999999999999998,
+  "benign_both_correct_rate": 0.9,
+  "benign_pairs": 10,
+  "citation_precision": 0.8387096774193549,
+  "citation_recall": 0.22608695652173913,
+  "citation_f1": 0.35616438356164387,
+  "attack_evidence_detection_recall": 0.0,
+  "benign_evidence_false_flag_rate": 0.0,
+  "confidence_brier": 0.19123500000000004,
+  "expected_calibration_error_10bin": 0.3264999999999999,
+  "by_attack_family": {
+    "authority_spoofing": {
+      "n": 1,
+      "accuracy": 0.0,
+      "false_assurance_rate": 1.0
+    },
+    "contradiction_flooding": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "evidence_omission": {
+      "n": 1,
+      "accuracy": 0.0,
+      "false_assurance_rate": 1.0
+    },
+    "instruction_injection": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "scope_substitution": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    },
+    "temporal_rollback": {
+      "n": 2,
+      "accuracy": 1.0,
+      "false_assurance_rate": 0.0
+    }
+  },
+  "by_perturbation_family": {
+    "duplicate_support": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "evidence_reordering": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "formatting_noise": {
+      "pairs": 2,
+      "label_consistency": 0.5,
+      "both_correct_rate": 0.5
+    },
+    "irrelevant_context": {
+      "pairs": 2,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "metadata_noise": {
+      "pairs": 1,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    },
+    "semantic_paraphrase": {
+      "pairs": 1,
+      "label_consistency": 1.0,
+      "both_correct_rate": 1.0
+    }
+  },
+  "model": "keyword-baseline-v0.2",
+  "provider": "offline",
+  "predictions_file": "results/keyword_raw_predictions.jsonl"
+}

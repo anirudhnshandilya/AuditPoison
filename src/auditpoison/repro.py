@@ -58,10 +58,11 @@ def build_run_manifest(
     provider: str,
     config: dict[str, Any],
     bundle_ids: list[str],
+    prompt_file: str = "prompts/auditor_system_v0.2.txt",
 ) -> dict[str, Any]:
     root = Path(root)
     predictions_path = Path(predictions_path)
-    prompt_path = root / "prompts" / "auditor_system_v0.2.txt"
+    prompt_path = root / prompt_file
     now = datetime.now(timezone.utc)
     return {
         "schema_version": "1.0.0",

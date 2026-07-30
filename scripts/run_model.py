@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from auditpoison.baseline import KeywordBaseline
+from auditpoison.defense import EvidenceShieldAdapter
 from auditpoison.harness import CommandAdapter, evaluate_adapter
 from auditpoison.io import load_bundles, write_jsonl
 from auditpoison.prompting import load_system_prompt
@@ -18,6 +19,7 @@ from auditpoison.repro import build_run_manifest, write_manifest
 
 parser = ArgumentParser(description="Run AuditPoison with a reproducible model configuration.")
 parser.add_argument("--adapter", choices=["keyword", "command", "ollama", "openai-compatible"], required=True)
+parser.add_argument("--defense", choices=["none", "evidenceshield"], default="none")
 parser.add_argument("--model", default="keyword-smoke")
 parser.add_argument("--output", default="predictions.jsonl")
 parser.add_argument("--manifest", default=None)
@@ -40,7 +42,8 @@ if args.limit is not None:
         parser.error("--limit must be positive")
     bundles = bundles[: args.limit]
 
-system_prompt = load_system_prompt(ROOT)
+prompt_version = "v0.3" if args.defense == "evidenceshield" else "v0.2"
+system_prompt = load_system_prompt(ROOT, prompt_version)
 if args.adapter == "keyword":
     adapter = KeywordBaseline()
     provider = "offline"
@@ -76,6 +79,9 @@ else:
     )
     provider = "openai-compatible"
 
+if args.defense == "evidenceshield":
+    adapter = EvidenceShieldAdapter(adapter)
+
 rows = evaluate_adapter(adapter, bundles)
 output = Path(args.output)
 write_jsonl(output, rows)
@@ -88,6 +94,8 @@ config = {
     "timeout_seconds": args.timeout,
     "max_retries": args.max_retries,
     "base_url": args.base_url,
+    "defense": args.defense,
+    "prompt_version": prompt_version,
 }
 manifest = build_run_manifest(
     ROOT,
@@ -97,6 +105,7 @@ manifest = build_run_manifest(
     provider=provider,
     config=config,
     bundle_ids=[bundle["bundle_id"] for bundle in bundles],
+    prompt_file=f"prompts/auditor_system_{prompt_version}.txt",
 )
 write_manifest(manifest_path, manifest)
 print(f"Wrote {len(rows)} predictions to {output}")

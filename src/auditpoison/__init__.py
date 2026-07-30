@@ -1,1 +1,3 @@
-__version__ = '0.2.0'
+"""AuditPoison benchmark and defence evaluation toolkit."""
+
+__version__ = "0.4.0"

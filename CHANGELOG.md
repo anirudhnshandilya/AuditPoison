@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0] - 2026-07-30
+
+### Added
+- EvidenceShield v0.1 evidence screening and positive-assurance gate.
+- Scope, temporal, instruction, authority, and provenance checks.
+- Defence inspection and metric-comparison scripts.
+- Frozen EvidenceShield auditor prompt v0.3.
+- Defence regression and non-oracle leakage tests.
+
+### Changed
+- Reproducibility manifests now record the selected frozen prompt and defence configuration.
+- Public documentation now uses repository-clone instructions.
+
 ## 0.3.0 — Day 3
 
 - Added native Ollama and OpenAI-compatible HTTP adapters.

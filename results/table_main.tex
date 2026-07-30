@@ -1,13 +1,14 @@
 \begin{table*}[t]
 \centering
 \small
-\caption{AuditPoison pilot results. All metrics are percentages. Lower is better for FAR and ASR; higher is better otherwise.}
+\caption{AuditPoison pilot results. All metrics are percentages. Lower is better for FAR, ASR, and CRR; higher is better otherwise.}
 \label{tab:auditpoison-main}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrrrr}
 \toprule
-Model & Acc. & Macro F1 & FAR $\downarrow$ & ASR $\downarrow$ & Benign $\uparrow$ & Citation F1 & Attack det. $\uparrow$ \\
+Model & Acc. & Macro F1 & FAR $\downarrow$ & ASR $\downarrow$ & CRR $\downarrow$ & Benign $\uparrow$ & Citation F1 & Attack det. $\uparrow$ \\
 \midrule
-keyword-baseline-v0.2 & 90.0 & 89.7 & 15.0 & 11.1 & 90.0 & 35.6 & 0.0 \\
+keyword-baseline-v0.2 & 90.0 & 89.7 & 15.0 & 11.1 & 5.0 & 90.0 & 35.6 & 0.0 \\
+keyword-baseline-v0.2+evidenceshield-v0.1 & 67.5 & 65.8 & 0.0 & 0.0 & 40.0 & 90.0 & 32.4 & 43.8 \\
 \bottomrule
 \end{tabular}
 \end{table*}

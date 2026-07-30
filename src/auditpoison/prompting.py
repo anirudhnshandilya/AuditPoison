@@ -14,17 +14,23 @@ OUTPUT_SPEC = {
 }
 
 
-def load_system_prompt(root: str | Path) -> str:
-    return (Path(root) / 'prompts' / 'auditor_system_v0.2.txt').read_text(encoding='utf-8').strip()
+def load_system_prompt(root: str | Path, version: str = 'v0.2') -> str:
+    filename = {'v0.2': 'auditor_system_v0.2.txt', 'v0.3': 'auditor_system_v0.3.txt'}.get(version)
+    if filename is None:
+        raise ValueError(f'Unknown prompt version: {version}')
+    return (Path(root) / 'prompts' / filename).read_text(encoding='utf-8').strip()
 
 
 def public_bundle_view(bundle: dict[str, Any]) -> dict[str, Any]:
     """Return only fields an evaluated auditor is allowed to observe."""
-    return {
+    visible = {
         'control': bundle['control'],
         'scope': bundle['scope'],
         'evidence': bundle['evidence'],
     }
+    if 'evidence_screening' in bundle:
+        visible['evidence_screening'] = bundle['evidence_screening']
+    return visible
 
 
 def render_user_prompt(bundle: dict[str, Any]) -> str:

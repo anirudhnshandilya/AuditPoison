@@ -16,3 +16,7 @@ python scripts\verify_run.py results\MODEL_predictions.manifest.json
 ```
 
 A passing verification establishes that the dataset, prompt, and prediction bytes match the recorded run. It does not guarantee that a hosted provider serves the same model weights under the same name; record the provider-reported model identifier and run date in the paper.
+
+## EvidenceShield runs
+
+Run manifests record `defense` and `prompt_version` in the configuration and hash the exact selected prompt file. Unshielded and shielded predictions must use distinct output and manifest filenames.

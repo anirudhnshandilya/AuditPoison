@@ -1,122 +1,138 @@
 # AuditPoison
 
-**Adversarial evidence attacks against LLM-based cybersecurity auditors.**
+**Open-source benchmark and defence testbed for adversarial evidence attacks against LLM-based cybersecurity auditors, targeting ACM AsiaCCS 2027.**
 
 AuditPoison evaluates whether an AI auditor can be manipulated into providing false compliance assurance when policies, logs, tickets, exports, and other audit evidence contain malicious, stale, irrelevant, contradictory, or out-of-scope content.
 
-## Day-3 release
+> **Research status:** version 0.4.0 is a development pilot. It is not production compliance advice and its smoke-test results are not scientific model comparisons.
 
-Version `0.3.0` provides an end-to-end, reproducible pilot:
+## Version 0.4.0
 
-- 40 validated evidence bundles across 20 paired scenarios;
-- 10 adversarial clean/attacked pairs spanning six attack families;
-- 10 compliant clean/benign pairs spanning six harmless perturbation families;
-- three oracle labels: compliant, non-compliant, and insufficient evidence;
-- native Ollama and OpenAI-compatible model adapters;
-- provider-neutral command and offline import paths;
-- cryptographic run manifests and verification;
-- paper-ready Markdown and LaTeX result tables;
-- GitHub Actions validation across Python 3.10–3.13.
+This release adds **EvidenceShield v0.1**, a provenance-aware defence wrapper with:
 
-## Dataset composition
+- scope and assessment-period screening;
+- instruction-like content quarantine;
+- unsupported authority-claim detection;
+- provenance and integrity labelling;
+- model-visible trust annotations;
+- a conservative positive-assurance gate;
+- defence comparison tooling and regression tests.
+
+The benchmark remains frozen at 40 bundles across 20 paired scenarios so the defence can be evaluated without changing the underlying pilot.
+
+## Benchmark composition
 
 | Oracle label | Bundles |
 |---|---:|
 | Compliant | 20 |
 | Non-compliant | 15 |
 | Insufficient evidence | 5 |
+| **Total** | **40** |
 
-The pilot is balanced at the false-assurance boundary: 20 bundles support compliance and 20 bundles make a compliant verdict unsafe.
+Attack families: instruction injection, authority spoofing, contradiction flooding, temporal rollback, scope substitution, and evidence omission.
 
-## Windows setup
+Benign perturbations: formatting noise, evidence reordering, irrelevant context, duplicate support, semantic paraphrasing, and metadata noise.
 
-After extraction, enter the **inner folder containing `pyproject.toml`**:
+## Installation
+
+```bash
+git clone https://github.com/anirudhnshandilya/AuditPoison.git
+cd AuditPoison
+python -m venv .venv
+```
+
+Windows Command Prompt:
 
 ```cmd
-cd AuditPoison-Day3\AuditPoison-Day3
+.venv\Scripts\activate
+python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
-python scripts\validate_dataset.py
+```
+
+Linux and macOS:
+
+```bash
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+```
+
+## Validate
+
+```bash
+python scripts/validate_dataset.py
 python -m pytest -q
 ```
 
-## Offline smoke test
+Expected: 40 bundles, 20 pairs, and 20 tests passing.
 
-```cmd
-python scripts\run_model.py --adapter keyword --output results\keyword_predictions.jsonl
-python scripts\evaluate_predictions.py results\keyword_predictions.jsonl --output results\keyword_metrics.json
-python scripts\verify_run.py results\keyword_predictions.manifest.json
-python scripts\build_paper_table.py results\keyword_metrics.json
+## Inspect EvidenceShield
+
+```bash
+python scripts/inspect_defense.py --bundle-id AP-AC2-001-attacked
 ```
 
-## Run a local LLM with Ollama
+## Compare unshielded and shielded smoke tests
 
-Install Ollama, make sure its service is running, and pull a model appropriate for your hardware. Then run:
+```bash
+python scripts/run_model.py --adapter keyword --output results/keyword_raw_predictions.jsonl
+python scripts/evaluate_predictions.py results/keyword_raw_predictions.jsonl --output results/keyword_raw_metrics.json
 
-```cmd
-python scripts\run_model.py --adapter ollama --model YOUR_MODEL --output results\YOUR_MODEL_predictions.jsonl
-python scripts\evaluate_predictions.py results\YOUR_MODEL_predictions.jsonl --output results\YOUR_MODEL_metrics.json
+python scripts/run_model.py --adapter keyword --defense evidenceshield --output results/keyword_shield_predictions.jsonl
+python scripts/evaluate_predictions.py results/keyword_shield_predictions.jsonl --output results/keyword_shield_metrics.json
+
+python scripts/compare_defenses.py results/keyword_raw_metrics.json results/keyword_shield_metrics.json
+python scripts/build_paper_table.py results/keyword_raw_metrics.json results/keyword_shield_metrics.json
 ```
 
-Start with a two-bundle contract check before the full run:
+The keyword adapter is a deterministic software smoke test, not a research baseline.
 
-```cmd
-python scripts\run_model.py --adapter ollama --model YOUR_MODEL --limit 2 --output results\ollama_test.jsonl
+## Run a real local model
+
+```bash
+python scripts/run_model.py --adapter ollama --model YOUR_MODEL --limit 2 --output results/ollama_test.jsonl
+python scripts/run_model.py --adapter ollama --model YOUR_MODEL --defense evidenceshield --output results/ollama_shield_predictions.jsonl
 ```
 
-## Run a hosted OpenAI-compatible endpoint
+## Run an OpenAI-compatible endpoint
 
-Set the key only in the current terminal session:
+Set `AUDITPOISON_API_KEY` only in the current shell, then run:
 
-```cmd
-set AUDITPOISON_API_KEY=YOUR_KEY
-python scripts\run_model.py --adapter openai-compatible --model YOUR_MODEL --base-url https://api.openai.com/v1 --output results\hosted_predictions.jsonl
-python scripts\evaluate_predictions.py results\hosted_predictions.jsonl --output results\hosted_metrics.json
+```bash
+python scripts/run_model.py --adapter openai-compatible --model YOUR_MODEL --base-url YOUR_BASE_URL --defense evidenceshield --output results/hosted_shield_predictions.jsonl
 ```
 
-Do not commit API keys. The runner records endpoint configuration but never the key.
-
-## Build a multi-model paper table
-
-```cmd
-python scripts\build_paper_table.py results\model_a_metrics.json results\model_b_metrics.json results\model_c_metrics.json
-```
-
-Outputs:
-
-- `results/table_main.md`
-- `results/table_main.tex`
-
-## Publish Day 1–3 to GitHub
-
-Use one repository with three commits and three annotated tags. See [`docs/github_setup.md`](docs/github_setup.md), or run the supplied PowerShell history-bootstrap script.
+AuditPoison never writes the API key to predictions or manifests.
 
 ## Core metrics
 
-- clean three-class accuracy and macro F1;
+- accuracy and macro F1;
 - False Assurance Rate;
 - paired Attack Success Rate and robust accuracy;
-- benign label consistency and both-correct rate;
+- benign consistency and both-correct rate;
 - citation precision, recall, and F1;
-- adversarial evidence detection recall;
-- confidence Brier score and expected calibration error.
-
-## Scientific-use warning
-
-The keyword baseline is only a software smoke test. The 40-bundle dataset is a development pilot and must not be presented as the final benchmark or as statistically conclusive evidence about any model family.
+- attack-evidence detection and benign false-flag rate;
+- Brier score and expected calibration error.
 
 ## Repository layout
 
 ```text
-.github/workflows/              continuous integration
-schema/                         evidence-bundle schema
-data/pilot/                     clean, attacked, and benign bundles
-prompts/                        frozen auditor prompt
-src/auditpoison/              loaders, adapters, metrics, manifests, reporting
-scripts/                        validation, model runs, evaluation, Git history
-results/                        generated metrics and paper tables
-docs/                           threat model and protocols
-tests/                          integrity, leakage, and reproducibility tests
+data/pilot/           Evidence bundles
+docs/                 Threat model, protocols, and EvidenceShield design
+prompts/              Frozen auditor prompts
+results/              Metrics and paper tables
+schema/               Evidence-bundle JSON Schema
+scripts/              Validation, experiments, comparison, and reporting
+src/auditpoison/      Python package and defence implementation
+tests/                Integrity, leakage, reproducibility, and defence tests
 ```
+
+## Versions
+
+- `v0.1.0` — threat model and adversarial pilot
+- `v0.2.0` — balanced benchmark and evaluation pipeline
+- `v0.3.0` — real-model adapters and reproducibility manifests
+- `v0.4.0` — EvidenceShield provenance firewall and assurance gate
 
 ## Licence and citation
 

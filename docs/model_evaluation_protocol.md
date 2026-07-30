@@ -24,3 +24,7 @@ The model must return label, confidence, cited_evidence_ids, flagged_evidence_id
 ## Repeated runs
 
 The pilot supports development only. Final paper experiments should use at least three repeated runs for non-deterministic systems and should report mean, standard deviation, parsing-failure rate, and exact model configuration.
+
+## Defence comparison protocol
+
+For every model configuration, run the same bundle order twice: once unshielded with prompt v0.2 and once with EvidenceShield using prompt v0.3. Keep model version, temperature, seed, endpoint, timeout, and retry policy fixed. Report False Assurance Rate and compliant rejection together; a defence is not successful merely because it abstains on every case.
