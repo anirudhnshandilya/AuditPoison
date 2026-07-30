@@ -5,7 +5,7 @@ import json
 import subprocess
 import time
 from dataclasses import dataclass
-from typing import Any, Protocol, Sequence
+from typing import Any, Callable, Protocol, Sequence
 
 from .parsing import parse_model_response
 from .prompting import render_request
@@ -74,27 +74,44 @@ class CommandAdapter:
         )
 
 
-def evaluate_adapter(adapter: AuditorAdapter, bundles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def prediction_to_row(adapter: AuditorAdapter, prediction: AuditPrediction) -> dict[str, Any]:
+    return {
+        "bundle_id": prediction.bundle_id,
+        "label": prediction.label,
+        "confidence": prediction.confidence,
+        "cited_evidence_ids": prediction.cited_evidence_ids,
+        "flagged_evidence_ids": prediction.flagged_evidence_ids,
+        "rationale": prediction.rationale,
+        "model": adapter.name,
+        "provider": prediction.provider,
+        "latency_ms": prediction.latency_ms,
+        "prompt_tokens": prediction.prompt_tokens,
+        "completion_tokens": prediction.completion_tokens,
+        "attempts": prediction.attempts,
+        "response_sha256": prediction.response_sha256,
+    }
+
+
+def evaluate_adapter(
+    adapter: AuditorAdapter,
+    bundles: list[dict[str, Any]],
+    *,
+    start_index: int = 0,
+    total: int | None = None,
+    on_row: Callable[[dict[str, Any]], None] | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for index, bundle in enumerate(bundles, start=1):
+    total = len(bundles) if total is None else total
+    for offset, bundle in enumerate(bundles, start=1):
         prediction = adapter.assess(bundle)
         if prediction.bundle_id != bundle["bundle_id"]:
             raise ValueError(f"Adapter returned {prediction.bundle_id} for {bundle['bundle_id']}")
-        row = {
-            "bundle_id": prediction.bundle_id,
-            "label": prediction.label,
-            "confidence": prediction.confidence,
-            "cited_evidence_ids": prediction.cited_evidence_ids,
-            "flagged_evidence_ids": prediction.flagged_evidence_ids,
-            "rationale": prediction.rationale,
-            "model": adapter.name,
-            "provider": prediction.provider,
-            "latency_ms": prediction.latency_ms,
-            "prompt_tokens": prediction.prompt_tokens,
-            "completion_tokens": prediction.completion_tokens,
-            "attempts": prediction.attempts,
-            "response_sha256": prediction.response_sha256,
-        }
+        row = prediction_to_row(adapter, prediction)
         rows.append(row)
-        print(f"[{index}/{len(bundles)}] {bundle['bundle_id']} -> {prediction.label}", flush=True)
+        if on_row is not None:
+            on_row(row)
+        print(
+            f"[{start_index + offset}/{total}] {bundle['bundle_id']} -> {prediction.label}",
+            flush=True,
+        )
     return rows

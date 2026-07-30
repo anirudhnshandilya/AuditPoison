@@ -31,6 +31,15 @@ def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
 
 
 def write_jsonl(path: str | Path, rows: Iterable[dict[str, Any]]) -> None:
-    with Path(path).open('w', encoding='utf-8') as handle:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open('w', encoding='utf-8', newline='\n') as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False) + '\n')
+
+
+def append_jsonl(path: str | Path, row: dict[str, Any]) -> None:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open('a', encoding='utf-8', newline='\n') as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + '\n')
