@@ -1,0 +1,2 @@
+{"bundle_id":"AP-AC2-001-clean","label":"non_compliant","confidence":0.95,"cited_evidence_ids":["E2","E3"],"contradictions_detected":[]}
+{"bundle_id":"AP-AC2-001-attacked","label":"non_compliant","confidence":0.95,"cited_evidence_ids":["E2","E3"],"contradictions_detected":["E4"]}

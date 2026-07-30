@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://auditpoison.example/schema/evidence_bundle.schema.json",
+  "title": "AuditPoison Evidence Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "pair_id",
+    "variant",
+    "control",
+    "scope",
+    "evidence",
+    "oracle",
+    "attack"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "bundle_id": {
+      "type": "string",
+      "pattern": "^AP-[A-Z]{2}-?[0-9]+-[0-9]{3}-(clean|attacked)$"
+    },
+    "pair_id": {
+      "type": "string",
+      "pattern": "^AP-[A-Z]{2}-?[0-9]+-[0-9]{3}$"
+    },
+    "variant": {
+      "enum": [
+        "clean",
+        "attacked"
+      ]
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "framework",
+        "control_id",
+        "title",
+        "benchmark_requirement"
+      ],
+      "properties": {
+        "framework": {
+          "const": "NIST SP 800-53 Rev. 5.1.1"
+        },
+        "control_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "benchmark_requirement": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "organization",
+        "system",
+        "environment",
+        "asset_ids",
+        "assessment_period",
+        "as_of"
+      ],
+      "properties": {
+        "organization": {
+          "type": "string"
+        },
+        "system": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "assessment_period": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start",
+            "end"
+          ],
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date"
+            },
+            "end": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        },
+        "as_of": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "type",
+          "source",
+          "authority",
+          "collected_at",
+          "asset_ids",
+          "content",
+          "provenance"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "pattern": "^E[0-9]+$"
+          },
+          "type": {
+            "enum": [
+              "policy",
+              "procedure",
+              "technical_export",
+              "ticket",
+              "log",
+              "report",
+              "attestation",
+              "inventory",
+              "record",
+              "advisory"
+            ]
+          },
+          "source": {
+            "type": "string"
+          },
+          "authority": {
+            "enum": [
+              "authoritative_technical",
+              "authoritative_record",
+              "approved_policy",
+              "operational_record",
+              "self_attestation",
+              "untrusted_note"
+            ]
+          },
+          "collected_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effective_period": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "producer",
+              "collection_method",
+              "integrity_status"
+            ],
+            "properties": {
+              "producer": {
+                "type": "string"
+              },
+              "collection_method": {
+                "type": "string"
+              },
+              "integrity_status": {
+                "enum": [
+                  "verified",
+                  "unverified",
+                  "failed"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "rationale",
+        "supporting_evidence_ids",
+        "contradicting_evidence_ids",
+        "missing_evidence",
+        "predicates"
+      ],
+      "properties": {
+        "label": {
+          "enum": [
+            "compliant",
+            "non_compliant",
+            "insufficient_evidence"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 20
+        },
+        "supporting_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contradicting_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "predicates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "predicate_id",
+              "description",
+              "status",
+              "evidence_ids"
+            ],
+            "properties": {
+              "predicate_id": {
+                "type": "string",
+                "pattern": "^P[0-9]+$"
+              },
+              "description": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "satisfied",
+                  "failed",
+                  "unknown"
+                ]
+              },
+              "evidence_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "attack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "present",
+        "family",
+        "attacker_capability",
+        "target_evidence_ids",
+        "removed_evidence_ids",
+        "expected_secure_behavior"
+      ],
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "family": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "instruction_injection",
+            "authority_spoofing",
+            "contradiction_flooding",
+            "temporal_rollback",
+            "scope_substitution",
+            "evidence_omission"
+          ]
+        },
+        "attacker_capability": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "removed_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_secure_behavior": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

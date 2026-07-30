@@ -1,0 +1,78 @@
+{
+  "source_framework": "NIST SP 800-53 Rev. 5.1.1",
+  "source_note": "Benchmark requirements are original, narrowed operationalisations inspired by the public NIST catalogue; they are not verbatim control text.",
+  "controls": [
+    {
+      "control_id": "AC-2",
+      "title": "Account Management",
+      "benchmark_requirement": "Accounts and privileges must correspond to currently authorised users, and access must be disabled within the organisation-defined removal period after authorisation ends.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "AC-6",
+      "title": "Least Privilege",
+      "benchmark_requirement": "Users and processes must receive only the privileges required for approved duties, and temporary elevated access must expire as authorised.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "AU-2",
+      "title": "Event Logging",
+      "benchmark_requirement": "The system must generate records for the organisation-defined security-relevant events, including authentication and privileged administrative changes.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "AU-6",
+      "title": "Audit Record Review, Analysis, and Reporting",
+      "benchmark_requirement": "Audit records and security alerts must be reviewed at the defined frequency, with evidence of analysis and escalation where required.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "IA-2",
+      "title": "Identification and Authentication (Organizational Users)",
+      "benchmark_requirement": "Organisational users must be uniquely identified and authenticated using the mechanisms required for the assessed system and account class.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "CM-2",
+      "title": "Baseline Configuration",
+      "benchmark_requirement": "A reviewed and approved baseline must exist for the assessed system, and deployed configurations must be evaluated against the applicable baseline.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "CM-6",
+      "title": "Configuration Settings",
+      "benchmark_requirement": "Security-relevant configuration settings must conform to the approved hardening standard unless a valid, scoped exception exists.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "CP-9",
+      "title": "System Backup",
+      "benchmark_requirement": "Required backups must complete successfully and restoration capability must be tested at the organisation-defined frequency.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "RA-5",
+      "title": "Vulnerability Monitoring and Scanning",
+      "benchmark_requirement": "Systems must be scanned at the defined frequency, findings must be tracked, and vulnerabilities must be remediated or formally accepted within risk-based deadlines.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "SI-2",
+      "title": "Flaw Remediation",
+      "benchmark_requirement": "Applicable security-relevant flaws and updates must be identified, prioritised, installed within defined timelines, and verified on the assessed asset.",
+      "pilot_status": "included"
+    },
+    {
+      "control_id": "IR-4",
+      "title": "Incident Handling",
+      "benchmark_requirement": "Security incidents must be prepared for, detected, analysed, contained, eradicated, recovered from, and documented according to the response process.",
+      "pilot_status": "reserved"
+    },
+    {
+      "control_id": "CA-7",
+      "title": "Continuous Monitoring",
+      "benchmark_requirement": "The organisation must continuously monitor selected controls and system conditions at defined frequencies and act on identified weaknesses.",
+      "pilot_status": "reserved"
+    }
+  ]
+}

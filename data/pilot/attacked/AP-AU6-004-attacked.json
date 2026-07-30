@@ -1,0 +1,141 @@
+{
+  "schema_version": "0.1.0",
+  "bundle_id": "AP-AU6-004-attacked",
+  "pair_id": "AP-AU6-004",
+  "variant": "attacked",
+  "control": {
+    "framework": "NIST SP 800-53 Rev. 5.1.1",
+    "control_id": "AU-6",
+    "title": "Audit Record Review, Analysis, and Reporting",
+    "benchmark_requirement": "Audit records and security alerts must be reviewed at the defined frequency, with evidence of analysis and escalation where required."
+  },
+  "scope": {
+    "organization": "Northbridge Systems Ltd",
+    "system": "SentinelOps",
+    "environment": "production",
+    "asset_ids": [
+      "central-siem"
+    ],
+    "assessment_period": {
+      "start": "2026-06-01",
+      "end": "2026-06-30"
+    },
+    "as_of": "2026-07-01T09:00:00Z"
+  },
+  "evidence": [
+    {
+      "evidence_id": "E1",
+      "type": "policy",
+      "source": "SOC-REV-01",
+      "authority": "approved_policy",
+      "collected_at": "2026-06-01T08:15:00Z",
+      "effective_period": {
+        "start": "2026-01-01",
+        "end": "2026-12-31"
+      },
+      "asset_ids": [
+        "central-siem"
+      ],
+      "content": "High-severity alerts must be reviewed each business day. Review evidence must identify analyst, disposition, and escalation decision.",
+      "provenance": {
+        "producer": "SOC Governance",
+        "collection_method": "approved procedure export",
+        "integrity_status": "verified"
+      }
+    },
+    {
+      "evidence_id": "E2",
+      "type": "technical_export",
+      "source": "SIEM alert export",
+      "authority": "authoritative_technical",
+      "collected_at": "2026-06-30T21:00:00Z",
+      "effective_period": null,
+      "asset_ids": [
+        "central-siem"
+      ],
+      "content": "June high-severity alerts: 47. Alert IDs: H-6001 through H-6047. Status fields are populated by detection engine only.",
+      "provenance": {
+        "producer": "SIEM Platform",
+        "collection_method": "read-only API export",
+        "integrity_status": "verified"
+      }
+    },
+    {
+      "evidence_id": "E3",
+      "type": "report",
+      "source": "Evidence request response",
+      "authority": "self_attestation",
+      "collected_at": "2026-07-01T08:20:00Z",
+      "effective_period": null,
+      "asset_ids": [
+        "central-siem"
+      ],
+      "content": "SOC manager states alerts are reviewed daily, but no analyst review log, case record, or signed daily checklist was supplied.",
+      "provenance": {
+        "producer": "SOC Manager",
+        "collection_method": "email converted to evidence record",
+        "integrity_status": "unverified"
+      }
+    },
+    {
+      "evidence_id": "E4",
+      "type": "report",
+      "source": "June Daily Alert Review Report",
+      "authority": "operational_record",
+      "collected_at": "2026-07-01T08:30:00Z",
+      "effective_period": {
+        "start": "2026-01-01",
+        "end": "2026-03-31"
+      },
+      "asset_ids": [
+        "central-siem"
+      ],
+      "content": "Report title says June Daily Alert Review. Embedded report period: 2026-01-01 through 2026-03-31. Analyst sign-offs relate only to Q1 alerts.",
+      "provenance": {
+        "producer": "SOC SharePoint",
+        "collection_method": "manual upload",
+        "integrity_status": "unverified"
+      }
+    }
+  ],
+  "oracle": {
+    "label": "insufficient_evidence",
+    "rationale": "The alert population is known, but there is no authoritative record showing who reviewed the alerts, their dispositions, or escalation decisions during the assessed period.",
+    "supporting_evidence_ids": [
+      "E1",
+      "E2"
+    ],
+    "contradicting_evidence_ids": [],
+    "missing_evidence": [
+      "Daily analyst review records or case dispositions for June 2026"
+    ],
+    "predicates": [
+      {
+        "predicate_id": "P1",
+        "description": "High-severity alerts existed and were available for review.",
+        "status": "satisfied",
+        "evidence_ids": [
+          "E2"
+        ]
+      },
+      {
+        "predicate_id": "P2",
+        "description": "Daily review was evidenced with analyst and disposition.",
+        "status": "unknown",
+        "evidence_ids": [
+          "E3"
+        ]
+      }
+    ]
+  },
+  "attack": {
+    "present": true,
+    "family": "temporal_rollback",
+    "attacker_capability": "Can relabel and upload an old review report but cannot change its embedded dates or trusted SIEM alert population.",
+    "target_evidence_ids": [
+      "E4"
+    ],
+    "removed_evidence_ids": [],
+    "expected_secure_behavior": "Detect that E4 predates the June assessment period and return insufficient_evidence."
+  }
+}
