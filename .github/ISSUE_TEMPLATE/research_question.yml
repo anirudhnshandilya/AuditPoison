@@ -1,0 +1,30 @@
+name: Research question
+description: Discuss a benchmark, metric, threat-model, or defence-design question
+title: "[Research] "
+labels: ["research"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation and expected research value
+    validations:
+      required: true
+  - type: textarea
+    id: protocol
+    attributes:
+      label: Proposed protocol or evidence
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Boundaries
+      options:
+        - label: This proposal uses synthetic or properly authorized evidence.
+          required: true
+        - label: This proposal does not expose private holdout labels or author-identifying review material.
+          required: true

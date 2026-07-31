@@ -13,3 +13,27 @@ results/*_raw*.jsonl
 !results/keyword_smoke_metrics.json
 !results/table_main.md
 !results/table_main.tex
+# Local research outputs and double-blind materials
+results/*.jsonl
+results/*.manifest.json
+results/*_metrics.json
+results/*_comparison.md
+results/*_report.md
+!results/keyword_smoke_metrics.json
+!results/table_main.md
+!results/table_main.tex
+
+AuditPoison-Holdout*/
+AuditPoison-Paper*/
+analysis_day*/
+evaluated/
+preflight/
+*.key
+*.fernet
+PRE_UNSEAL*
+DAY11_ANALYSIS_COMMITMENT*
+KEY_VERIFICATION_RECEIPT.json
+RUN_STATUS.md
+freeze_manifest.json
+model_matrix.registered.json
+
