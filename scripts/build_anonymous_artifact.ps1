@@ -7,6 +7,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+function Write-Utf8NoBom([string]$Path, [string]$Content) {
+  [System.IO.File]::WriteAllText($Path, $Content, $Utf8NoBom)
+}
+
 foreach ($p in @($Repo, $Holdout, $Key)) {
   if (-not (Test-Path $p)) { throw "Required path not found: $p" }
 }
@@ -58,7 +63,9 @@ $holdoutArgs = @(
 & robocopy @holdoutArgs | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed for holdout with code $LASTEXITCODE" }
 
-Copy-Item $Key (Join-Path $holdoutOut "oracle_unlock.key") -Force
+$keyOut = Join-Path $OutputRoot "oracle_key"
+New-Item -ItemType Directory -Path $keyOut -Force | Out-Null
+Copy-Item $Key (Join-Path $keyOut "oracle_unlock.key") -Force
 
 # Preserve digests of excluded commitment records without exposing absolute local paths.
 $digests = @()
@@ -76,7 +83,7 @@ $pyproject = Join-Path $software "pyproject.toml"
 if (Test-Path $pyproject) {
   $p = Get-Content $pyproject -Raw
   $p = [regex]::Replace($p, '(?m)^authors\s*=\s*\[.*\]\s*$', 'authors = [{name = "Anonymous Authors"}]')
-  Set-Content $pyproject $p -Encoding UTF8
+  Write-Utf8NoBom -Path $pyproject -Content $p
 }
 
 # Scrub identity-bearing strings from copied text metadata.
@@ -101,7 +108,7 @@ Get-ChildItem $OutputRoot -Recurse -File | Where-Object {
       $updated = [regex]::Replace($updated, $r.Pattern, $r.Replacement)
     }
     if ($updated -ne $raw) {
-      Set-Content $_.FullName $updated -Encoding UTF8
+      Write-Utf8NoBom -Path $_.FullName -Content $updated
     }
   }
 }

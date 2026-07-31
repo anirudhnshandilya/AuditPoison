@@ -6,6 +6,7 @@ This artifact accompanies an anonymized submission studying adversarial evidence
 
 - `software/`: frozen benchmark and defence implementation;
 - `holdout_v2/`: blinded holdout inputs, completed registered predictions, evaluation outputs, and analysis;
+- `oracle_key/`: the separately stored post-run oracle unlock key;
 - `ARTIFACT_SHA256SUMS.txt`: relative-path SHA-256 inventory;
 - `ANONYMIZATION_REPORT.txt`: identity-leak scan result;
 - `ORIGINAL_COMMITMENT_DIGESTS.txt`: hashes of excluded path-bearing commitment records.
