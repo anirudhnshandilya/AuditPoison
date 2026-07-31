@@ -32,6 +32,9 @@ $repoArgs = @(
 & robocopy @repoArgs | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed for software with code $LASTEXITCODE" }
 
+# Exclude this builder because its identity-detection literals trigger the artifact scan.
+Remove-Item (Join-Path $software "scripts\build_anonymous_artifact.ps1") -Force -ErrorAction SilentlyContinue
+
 Copy-Item (Join-Path $Repo "ANONYMOUS_ARTIFACT_README.md") (Join-Path $OutputRoot "README.md") -Force -ErrorAction SilentlyContinue
 if (-not (Test-Path (Join-Path $OutputRoot "README.md"))) {
   $fallback = Join-Path $Repo "scripts\..\ANONYMOUS_ARTIFACT_README.md"
@@ -77,9 +80,9 @@ if (Test-Path $pyproject) {
 }
 
 # Scrub identity-bearing strings from copied text metadata.
-$home = [regex]::Escape($env:USERPROFILE)
+$userHomePattern = [regex]::Escape($env:USERPROFILE)
 $replacements = @(
-  @{Pattern=$home; Replacement="<USER_HOME>"},
+  @{Pattern=$userHomePattern; Replacement="<USER_HOME>"},
   @{Pattern="(?i)Anirudh Narendra Shandilya"; Replacement="Anonymous Author"},
   @{Pattern="(?i)Anirudh N Shandilya"; Replacement="Anonymous Author"},
   @{Pattern="(?i)anirudhnshandilya"; Replacement="anonymous-repository"},
