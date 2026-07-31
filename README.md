@@ -147,3 +147,7 @@ AuditPoison is released under the MIT License. Citation metadata is provided in 
 ## Blinded holdout protocol
 
 The 40-bundle pilot is development data. The primary generalisation study uses a separately stored 60-bundle blinded holdout whose oracle labels and pair metadata are encrypted until all preregistered runs finish. The security-critical implementation is frozen through `scripts/freeze_holdout.py` before any holdout evaluation. See `docs/blinded_holdout_protocol.md`.
+
+## Blinded Holdout v2
+
+The original blinded-run protocol was aborted before oracle evaluation because its separately generated unlock key was not delivered. No oracle labels were reconstructed and no v1 performance metrics are reported. A newly authored Holdout v2 uses a separately delivered and pre-verified key, a fresh cryptographic commitment, and a reduced six-configuration matrix. See `docs/blinded_holdout_v2_protocol.md`.
